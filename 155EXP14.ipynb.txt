@@ -1,0 +1,441 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": []
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "code",
+      "execution_count": 1,
+      "metadata": {
+        "id": "lEEF0z9O0zXF"
+      },
+      "outputs": [],
+      "source": [
+        "import csv\n",
+        "import random\n",
+        "import math\n",
+        "\n",
+        "\n",
+        "\n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "68c11cac"
+      },
+      "source": [
+        "# Create a synthetic CSV file to run the Naive Bayes Classifier\n",
+        "with open('/content/Naive-Bayes-Classification-Data.csv', 'w') as f:\n",
+        "    f.write(\"Feature1,Feature2,Feature3,Class\\n\")\n",
+        "    # Class 0 data (centered around lower values)\n",
+        "    for _ in range(50):\n",
+        "        f.write(f\"{random.normalvariate(2.0, 0.5)},{random.normalvariate(2.0, 0.5)},{random.normalvariate(2.0, 0.5)},0\\n\")\n",
+        "    # Class 1 data (centered around higher values)\n",
+        "    for _ in range(50):\n",
+        "        f.write(f\"{random.normalvariate(6.0, 0.8)},{random.normalvariate(6.0, 0.8)},{random.normalvariate(6.0, 0.8)},1\\n\")"
+      ],
+      "execution_count": 27,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "7be50398"
+      },
+      "source": [
+        "# Create a synthetic CSV file to run the Naive Bayes Classifier\n",
+        "with open('/content/Naive-Bayes-Classification-Data.csv', 'w') as f:\n",
+        "    f.write(\"Feature1,Feature2,Feature3,Class\\n\")\n",
+        "    # Class 0 data (centered around lower values)\n",
+        "    for _ in range(50):\n",
+        "        f.write(f\"{random.normalvariate(2.0, 0.5)},{random.normalvariate(2.0, 0.5)},{random.normalvariate(2.0, 0.5)},0\\n\")\n",
+        "    # Class 1 data (centered around higher values)\n",
+        "    for _ in range(50):\n",
+        "        f.write(f\"{random.normalvariate(6.0, 0.8)},{random.normalvariate(6.0, 0.8)},{random.normalvariate(6.0, 0.8)},1\\n\")"
+      ],
+      "execution_count": 28,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def loadcsv(filename):\n",
+        "  lines = csv.reader(open(filename, \"r\"))\n",
+        "  # Skip the header row\n",
+        "  next(lines)\n",
+        "  dataset = list(lines)\n",
+        "  for i in range(len(dataset)):\n",
+        "    # Convert strings into numbers\n",
+        "    dataset[i] = [float(x) for x in dataset[i]]\n",
+        "  return dataset"
+      ],
+      "metadata": {
+        "id": "b8nIdx181AIs"
+      },
+      "execution_count": 4,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def splitdataset(dataset, splitratio):\n",
+        "  # 67% training size\n",
+        "  trainsize = int(len(dataset) * splitratio)\n",
+        "  trainset = []\n",
+        "  copy = list(dataset)\n",
+        "  while len(trainset) < trainsize:\n",
+        "    # Generate random index\n",
+        "    index = random.randrange(len(copy))\n",
+        "    trainset.append(copy.pop(index))\n",
+        "  return [trainset, copy]"
+      ],
+      "metadata": {
+        "id": "NrlNcoE11Ia7"
+      },
+      "execution_count": 6,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def separatebyclass(dataset):\n",
+        "  separated = {}\n",
+        "  # Separate data according to class\n",
+        "  for i in range(len(dataset)):\n",
+        "    vector = dataset[i]\n",
+        "    if vector[-1] not in separated:\n",
+        "      separated[vector[-1]] = []\n",
+        "    separated[vector[-1]].append(vector)\n",
+        "  return separated"
+      ],
+      "metadata": {
+        "id": "En7qpwt81Rkr"
+      },
+      "execution_count": 8,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def mean(numbers):\n",
+        "  return sum(numbers) / float(len(numbers))"
+      ],
+      "metadata": {
+        "id": "KWNmgTZO1Z_-"
+      },
+      "execution_count": 9,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def stdev(numbers):\n",
+        "  avg = mean(numbers)\n",
+        "  variance = sum(\n",
+        "  [pow(x - avg, 2) for x in numbers]\n",
+        "  ) / float(len(numbers) - 1)\n",
+        "  return math.sqrt(variance)"
+      ],
+      "metadata": {
+        "id": "ZqCkH3Vj1en9"
+      },
+      "execution_count": 10,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def summarize(dataset):\n",
+        "  summaries = [\n",
+        "  (mean(attribute), stdev(attribute))\n",
+        "  for attribute in zip(*dataset)\n",
+        "  ]\n",
+        "  del summaries[-1]\n",
+        "  return summaries"
+      ],
+      "metadata": {
+        "id": "KeH7c2of1lJU"
+      },
+      "execution_count": 11,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def summarizebyclass(dataset):\n",
+        "  separated = separatebyclass(dataset)\n",
+        "  summaries = {}\n",
+        "  for classvalue, instances in separated.items():\n",
+        "    # Calculate mean and standard deviation\n",
+        "    summaries[classvalue] = summarize(instances)\n",
+        "  return summaries\n",
+        "\n",
+        "# Calculate Gaussian probability\n",
+        "def calculateprobability(x, mean, stdev):\n",
+        "  exponent = math.exp(-(math.pow(x - mean, 2) / (2 * math.pow(stdev, 2))))\n",
+        "  return (1 / (math.sqrt(2 * math.pi) * stdev)) * exponent"
+      ],
+      "metadata": {
+        "id": "9zQPD3Bo1pNN"
+      },
+      "execution_count": 13,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def calculateclassprobabilities(summaries, inputvector):\n",
+        "  probabilities = {}\n",
+        "  for classvalue, classsummaries in summaries.items():\n",
+        "    probabilities[classvalue] = 1\n",
+        "    for i in range(len(classsummaries)):\n",
+        "      mean_value, stdev_value = classsummaries[i]\n",
+        "      x = inputvector[i]\n",
+        "      probabilities[classvalue] *= calculateprobability(\n",
+        "        x,\n",
+        "        mean_value,\n",
+        "        stdev_value\n",
+        "      )\n",
+        "  return probabilities"
+      ],
+      "metadata": {
+        "id": "JzB8wDgh1wu5"
+      },
+      "execution_count": 15,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def predict(summaries, inputvector):\n",
+        "  probabilities = calculateclassprobabilities(\n",
+        "    summaries,\n",
+        "    inputvector\n",
+        "  )\n",
+        "  bestLabel = None\n",
+        "  bestProb = -1\n",
+        "  for classvalue, probability in probabilities.items():\n",
+        "    if bestLabel is None or probability > bestProb:\n",
+        "      bestProb = probability\n",
+        "      bestLabel = classvalue\n",
+        "  return bestLabel"
+      ],
+      "metadata": {
+        "id": "bwwjGyOn1-t9"
+      },
+      "execution_count": 17,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def getpredictions(summaries, testset):\n",
+        "  predictions = []\n",
+        "  for i in range(len(testset)):\n",
+        "    result = predict(\n",
+        "      summaries,\n",
+        "      testset[i]\n",
+        "    )\n",
+        "    predictions.append(result)\n",
+        "  return predictions"
+      ],
+      "metadata": {
+        "id": "3l3-dlvK2QRa"
+      },
+      "execution_count": 19,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def getaccuracy(testset, predictions):\n",
+        "  correct = 0\n",
+        "  for i in range(len(testset)):\n",
+        "    if testset[i][-1] == predictions[i]:\n",
+        "      correct += 1\n",
+        "  return (correct / float(len(testset))) * 100.0"
+      ],
+      "metadata": {
+        "id": "aH_7TCF62YZ-"
+      },
+      "execution_count": 21,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def main():\n",
+        "  # CSV file name\n",
+        "  filename = '/content/Naive-Bayes-Classification-Data.csv'\n",
+        "  splitratio = 0.67\n",
+        "  dataset = loadcsv(filename)\n",
+        "  trainingset, testset = splitdataset(dataset, splitratio)\n",
+        "  print(\n",
+        "    'Split {0} rows into train={1} and test={2} rows'\n",
+        "    .format(\n",
+        "      len(dataset),\n",
+        "      len(trainingset),\n",
+        "      len(testset)\n",
+        "    )\n",
+        "  )\n",
+        "  # Prepare model\n",
+        "  summaries = summarizebyclass(trainingset)\n",
+        "  # Test model\n",
+        "  predictions = getpredictions(summaries, testset)\n",
+        "  accuracy = getaccuracy(testset, predictions)\n",
+        "  print('Accuracy: {0}%'.format(accuracy))"
+      ],
+      "metadata": {
+        "id": "IuL5Bi_92dSM"
+      },
+      "execution_count": 25,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "main()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "QqcNx3Vt2jTx",
+        "outputId": "dd03f573-bf6a-4894-a6cf-fea629f3bdcd"
+      },
+      "execution_count": 29,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Split 100 rows into train=67 and test=33 rows\n",
+            "Accuracy: 100.0%\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Load dataset and split ratio globally so they are defined in this scope\n",
+        "filename = '/content/Naive-Bayes-Classification-Data.csv'\n",
+        "splitratio = 0.67\n",
+        "dataset = loadcsv(filename)\n",
+        "\n",
+        "trainingset, testset = splitdataset(\n",
+        "  dataset,\n",
+        "  splitratio\n",
+        ")\n",
+        "print(\n",
+        "  'Split {0} rows into train={1} and test={2} rows'\n",
+        "  .format(\n",
+        "    len(dataset),\n",
+        "    len(trainingset),\n",
+        "    len(testset)\n",
+        "  )\n",
+        ")"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "Sp9dVbgK3HqF",
+        "outputId": "9430c411-aa35-4f23-8a5d-701a1df45eca"
+      },
+      "execution_count": 32,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Split 100 rows into train=67 and test=33 rows\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "summaries = summarizebyclass(trainingset)"
+      ],
+      "metadata": {
+        "id": "Up1_24IW3XX5"
+      },
+      "execution_count": 33,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "predictions = getpredictions(\n",
+        "  summaries,\n",
+        "  testset\n",
+        ")\n",
+        "accuracy = getaccuracy(\n",
+        "  testset,\n",
+        "  predictions\n",
+        ")\n",
+        "print(\n",
+        "  'Accuracy of the classifier is : {0}%'\n",
+        "  .format(accuracy)\n",
+        ")"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "aTpnGQxK3b3-",
+        "outputId": "c53d6dd6-d767-425e-a2ff-44e75bf16971"
+      },
+      "execution_count": 35,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Accuracy of the classifier is : 100.0%\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "if __name__ == \"__main__\":\n",
+        "  main()"
+      ],
+      "metadata": {
+        "id": "6tonGq543lsl",
+        "outputId": "97300fbd-7dbc-471f-db67-66e6c95e8c29",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        }
+      },
+      "execution_count": 36,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Split 100 rows into train=67 and test=33 rows\n",
+            "Accuracy: 100.0%\n"
+          ]
+        }
+      ]
+    }
+  ]
+}
